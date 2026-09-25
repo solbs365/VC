@@ -10,9 +10,9 @@ Este repositorio contiene el cuaderno Jupyter con la resolución de las tareas d
 
 El trabajo se divide en  3 tareas principales:    
 
-Tarea 1: Análisis de perfiles con Canny.   
-Tarea 2: Análisis comparativo con Sobel.   
-Tarea 3: Demostrador interactivo (Virtual Drums)
+- Tarea 1: Análisis de perfiles con Canny.   
+- Tarea 2: Análisis comparativo con Sobel.   
+- Tarea 3: Demostrador interactivo (Virtual Drums)
    
 ### 2. Paquetes necesarios
 Podemos hacer uso del mismo environment de la primera práctica, asegurándonos de tener instaladas las librerías de visión, cálculo y audio.
