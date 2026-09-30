@@ -1,7 +1,7 @@
 # Práctica 2: Funciones básicas de OpenCV. Documentación
 
-Autora 1: Solmaire Basulto Santana  
-Autor 2: Gerad Leopoldo Guzmán Hernández
+Autora 1: Solmaire Basulto Santana @solbs365
+Autor 2: Gerad Leopoldo Guzmán Hernández @gerad367
 
 ---
 
