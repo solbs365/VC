@@ -51,7 +51,7 @@ Se aplicó nuevamente `cv2.reduce`, añadiendo `.flatten()` para aplanar el arra
 
 | Gradiente de sobel sin umbralizar | Sobel umbralizado | Resultado Final | Canny vs Sobel |
 | :---: | :---: | :---: | :---:|
-| <img src="tarea2_1_sobel_gradiente.jpg" width="250"/> | <img src="tarea2_2_sobel_umbralizado.jpg" width="250"/> | <img src="tarea2_3_final.jpg" width="250"/> | <img src="tarea2_4_comparacion.jpg" width="250"/> |
+| <img src="img/tarea2_1_sobel_gradiente.jpg" width="250"/> | <img src="img/tarea2_2_sobel_umbralizado.jpg" width="250"/> | <img src="img/tarea2_3_final.jpg" width="250"/> | <img src="img/tarea2_4_comparacion.jpg" width="400"/> |
   
 #### Tarea 3: Demostrador interactivo (Virtual Drums)
 Objetivo: Diseñar un demostrador interactivo en tiempo real que reinterprete el procesamiento de imagen inspirado en instalaciones como Virtual Air Guitar o My little piece of privacy.
