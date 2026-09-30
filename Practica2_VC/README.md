@@ -36,7 +36,7 @@ Finalmente, se convirtió la imagen Canny a formato RGB `cv2.cvtColor` para pode
 
 | Imagen Original | Bordes Canny | Resultado Final |
 | :---: | :---: | :---: |
-| <img src="img/original.jpg" width="250"/> | <img src="img/canny.jpg" width="250"/> | <img src="img/final_tarea1.jpg" width="250"/> |
+| <img src="img/tarea1_1_gris.jpg" width="250"/> | <img src="img/tarea1_2_canny.jpg" width="250"/> | <img src="img/tarea1_3_final.jpg" width="250"/> |
 
 
 #### Tarea 2: Análisis de perfiles por filas y umbralización con Canny
@@ -49,7 +49,9 @@ El resultado del operador Sobel presenta diferentes escalas de grises dependiend
 
 Se aplicó nuevamente `cv2.reduce`, añadiendo `.flatten()` para aplanar el array devuelto por OpenCV y evitar errores de dimensionalidad. Tras calcular los máximos (maxfil, maxcol) y guardar las posiciones que superaban el umbral del 90%, se dibujaron las líneas horizontales y verticales sobre la imagen original.`
 
-
+| Gradiente de sobel sin umbralizar | Sobel umbralizado | Resultado Final | Canny vs Sobel |
+| :---: | :---: | :---: | :---:|
+| <img src="tarea2_1_sobel_gradiente.jpg" width="250"/> | <img src="tarea2_2_sobel_umbralizado.jpg" width="250"/> | <img src="tarea2_3_final.jpg" width="250"/> | <img src="tarea2_4_comparacion.jpg" width="250"/> |
   
 #### Tarea 3: Demostrador interactivo (Virtual Drums)
 Objetivo: Diseñar un demostrador interactivo en tiempo real que reinterprete el procesamiento de imagen inspirado en instalaciones como Virtual Air Guitar o My little piece of privacy.
