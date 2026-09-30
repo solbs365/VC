@@ -32,9 +32,13 @@ Para esta tarea, se partió de la imagen original (mandril.jpg) convertida a esc
 En lugar de recorrer la matriz de la imagen con bucles for (lo cual es ineficiente en Python), se utilizó la función `cv2.reduce` de OpenCV. Esta función permite empaquetar los datos de la matriz.
 
 Una vez obtenida la lista con la suma de cada fila (fila_counts), se calculó el valor máximo `maxfil`. Posteriormente, se iteró sobre esta lista para encontrar los índices de las filas que cumplían la condición (fila_counts[i] >= maxfil * 0.90), almacenándolos en el array pos.
-Finalmente, se convirtió la imagen Canny a formato RGB `cv2.cvtColor` para poder dibujar en color, y se trazó una línea azul `cv2.line` cruzando todo el ancho de la imagen en las coordenadas y correspondientes a las filas almacenadas en pos.   
+Finalmente, se convirtió la imagen Canny a formato RGB `cv2.cvtColor` para poder dibujar en color, y se trazó una línea roja `cv2.line` cruzando todo el ancho de la imagen en las coordenadas y correspondientes a las filas almacenadas en pos.   
 
-  
+| Imagen Original | Bordes Canny | Resultado Final |
+| :---: | :---: | :---: |
+| <img src="img/original.jpg" width="250"/> | <img src="img/canny.jpg" width="250"/> | <img src="img/final_tarea1.jpg" width="250"/> |
+
+
 #### Tarea 2: Análisis de perfiles por filas y umbralización con Canny
 Objetivo: Aplicar el operador Sobel para la detección de bordes, umbralizar el resultado y repetir el proceso de conteo de píxeles (esta vez tanto por filas como por columnas). Comparar gráficamente los resultados obtenidos entre Sobel y Canny.
 
