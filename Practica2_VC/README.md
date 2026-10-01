@@ -73,7 +73,13 @@ Una vez se obtiene esa imagen del movimiento, se recorta en cuatro cuadrantes. L
   
 Problemas de lag y feedback visual
 Al principio, para que el sonido no se repitiera, se intentó poner retardos, pero eso congelaba la cámara y daba mucho lag. La solución final fue usar "banderas de estado" (tocando_platillo = False). Gracias a esto, el sonido salta justo en el instante del golpe y bloquea la repetición hasta que se detiene el movimiento, lo que permite dar golpes muy rápidos sin que la cámara se trabe.
-Por último, para que la experiencia fuera más interactiva al mirar la pantalla, se añadió un efecto visual con `cv2.addWeighted` que ilumina el cuadrante con un color semitransparente justo en el momento en el que detecta el golpe.  
+Por último, para que la experiencia fuera más interactiva al mirar la pantalla, se añadió un efecto visual con `cv2.addWeighted` que ilumina el cuadrante con un color semitransparente justo en el momento en el que detecta el golpe.
+
+#### Demostración de uso
+
+https://github.com/user-attachments/assets/9a2738f2-b3af-4bac-b667-2da8ef21a6f4
+
+
 
 ### 4. Bibliografía y Fuentes Consultadas
 
