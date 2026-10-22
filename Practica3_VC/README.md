@@ -185,14 +185,16 @@ En la matriz, las filas son la clase anotada y las columnas la predicha, así qu
 
 Los fragmentos se reconocen bastante bien, pero el clasificador tiende a decir FRA: 11 de los 25 pellets y 3 de los 11 alquitranes se clasifican como fragmento. El alquitrán, cuando se predice, siempre acierta (nadie más cae en esa columna), pero se escapan 4 de 11. En la imagen de resultado se ve que los pellets que no se clasifican bien suelen ser los más claros y que muchas partículas claras o transparentes ni siquiera se segmentan (son las que no tienen contorno de color).
 
-Problemas y mejoras:
+Problemas:
+  
+Durante el desarrollo de esta tarea nos hemos encontrado con varias limitaciones, principalmente al enfrentarnos a las condiciones de una imagen real:
+- Dificultades en la segmentación: Esta ha sido la parte más complicada. De las 120 anotaciones del test, hay 36 donde nuestro código no detecta nada. Aunque limitar el umbral a 25 nos ayudó a rescatar bastantes partículas claras, las que son muy transparentes se siguen camuflando con el fondo y las perdemos.
 
-- La segmentación es el punto débil. 36 de las 120 anotaciones no tienen partícula, y en entrenamiento se detectan muy pocas partículas respecto a las que hay. El límite de 25 en el umbral ayuda con las claras, pero las más transparentes siguen sin salir.
-- Con tan pocas muestras de entrenamiento (11, 11 y 8) el clasificador es poco fiable, sobre todo para el alquitrán.
-- En el entrenamiento no se descartan las partículas que quedan cortadas por el borde de la imagen, y esas tienen una forma que no es la real.
-- Si dos partículas están pegadas, la segmentación las junta en un solo contorno y esa anotación no se clasifica bien.
-- Como mejoras posibles: ecualizar el histograma o bajar el límite del umbral para detectar más partículas claras, separar las partículas unidas con *watershed*, o añadir más características de color o textura.
+- Pocas muestras para entrenar: Al depender de la segmentación inicial, el conjunto de entrenamiento se nos quedó muy pequeño (apenas 11 muestras de FRA, 11 de PEL y 8 de TAR). Somos conscientes de que con tan pocos datos el clasificador no es todo lo robusto que debería, sufriendo bastante para identificar correctamente el alquitrán.
 
+- Ruido en los bordes: Un detalle del que nos dimos cuenta al analizar los fallos es que no estamos descartando las partículas que aparecen cortadas por el borde de la imagen. Esto falsea sus características geométricas (el perímetro y la compacidad dejan de ser reales) y confunde al clasificador.
+
+- Partículas unidas: Cuando dos plásticos están pegados en la foto, nuestro umbralizado los fusiona en un solo contorno. Al unirse, su geometría cambia por completo y la predicción falla casi siempre.
 
 ### 4. Bibliografía y Fuentes Consultadas
 
