@@ -173,7 +173,7 @@ Las tres últimas métricas están calculadas con `average='weighted'`, es decir
 
 | Matriz de confusión | Resultado sobre la imagen |
 | :---: | :---: |
-| <img src="img/tarea2_2.jpg" width="350"/> | <img src="img/tarea2_1.jpg" width="300"/> |
+| <img src="img/tarea2_2.jpg" width="490"/> | <img src="img/tarea2_1.jpg" width="300"/> |
 
 En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Por clases:
 
@@ -193,10 +193,8 @@ Problemas y mejoras:
 - Si dos partículas están pegadas, la segmentación las junta en un solo contorno y esa anotación no se clasifica bien.
 - Como mejoras posibles: ecualizar el histograma o bajar el límite del umbral para detectar más partículas claras, separar las partículas unidas con *watershed*, o añadir más características de color o textura.
 
-### 4. Uso de herramientas de IA
 
-
-### 5. Bibliografía y Fuentes Consultadas
+### 4. Bibliografía y Fuentes Consultadas
 
 - [SMACC: A System for Microplastics Automatic Counting and Classification](https://doi.org/10.1109/ACCESS.2020.2970498)
 - [OpenCV: mouse events (highgui)](https://docs.opencv.org/4.13.0/d7/dfc/group__highgui.html#ga89e7806b0a616f6f1d502bd8c183ad3e)
