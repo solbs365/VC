@@ -90,7 +90,9 @@ Con las monedas sobre el folio blanco y buena luz funciona bien. Los problemas p
 
 #### Demostración de uso
 
-https://github.com/user-attachments/assets/ENLACE-DEL-VIDEO
+
+https://github.com/user-attachments/assets/717124f9-7895-4717-ab6b-e7ede48aff07
+
 
 
 #### Tarea 2: Clasificación de microplásticos
@@ -144,24 +146,24 @@ Partículas segmentadas en cada imagen de entrenamiento (en el enunciado se dice
 
 | FRA | PEL | TAR |
 | :---: | :---: | :---: |
-| XX | XX | XX |
+| 11 | 11 | 8 |
 
 Resultados en la imagen de test:
 
-- Partículas segmentadas: XX
-- Anotaciones sin partícula segmentada: XX de XX
+- Partículas segmentadas: 90
+- Anotaciones sin partícula segmentada: 36
 
 | Accuracy | Precision | Recall | F1 Score |
 | :---: | :---: | :---: | :---: |
-| XX | XX | XX | XX |
+| 0.79 | 0.80 | 0,79 | 0.78 |
 
 Las tres últimas métricas están calculadas con `average='weighted'`, es decir, promediando las clases según el número de muestras que tiene cada una.
 
 | Matriz de confusión | Resultado sobre la imagen |
 | :---: | :---: |
-| <img src="img/tarea2_3_matriz_confusion.png" width="350"/> | <img src="img/tarea2_4_resultado.jpg" width="350"/> |
+| <img width="350" alt="image" src="https://github.com/user-attachments/assets/ab1ef488-648c-4b01-87ec-e281d5c93c0e" /> | <img width="350" alt="image" src="https://github.com/user-attachments/assets/8cee6a6e-2b1b-4924-a577-b63f00c35cbb" /> |
 
-En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Las confusiones más habituales son entre XX y XX.
+En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Las confusiones más habituales son entre FRA y PEL.
 
 Problemas y mejoras:
 
