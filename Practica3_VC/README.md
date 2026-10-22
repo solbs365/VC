@@ -150,7 +150,7 @@ Se segmenta la imagen de test y se calculan las características igual que en el
 
 | Segmentación de las imágenes de entrenamiento | Segmentación del test |
 | :---: | :---: |
-| <img src="img/tarea2_1_entrenamiento.jpg" width="400"/> | <img src="img/tarea2_2_test_segmentado.jpg" width="300"/> |
+| <img src="img/tarea2_1_entrenamiento.jpg" width="600"/> | <img src="img/tarea2_2_test_segmentado.jpg" width="200"/> |
 
 Partículas segmentadas en cada imagen de entrenamiento (en el enunciado se dice que hay unas 80 de fragmentos, 55 de pellets y 54 de alquitrán):
 
