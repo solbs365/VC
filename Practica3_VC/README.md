@@ -173,7 +173,7 @@ Las tres últimas métricas están calculadas con `average='weighted'`, es decir
 
 | Matriz de confusión | Resultado sobre la imagen |
 | :---: | :---: |
-| <img src="img/tarea2_2.jpg" width="490"/> | <img src="img/tarea2_1.jpg" width="300"/> |
+| <img src="img/tarea2_2.jpg" height="250"/> | <img src="img/tarea2_1.jpg" height="250"/> |
 
 En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Por clases:
 
