@@ -51,7 +51,7 @@ En la primera versión el diámetro se calculaba directamente con el radio que d
 
 El total salía 3.96€ cuando en la imagen hay 3.88€. Se parecía solo porque unos errores compensaban a otros.
 
-Mirando los números nos dimos cuenta de que el radio que da Hough no es nada preciso. Por ejemplo, la moneda de 10 cts salía más grande que la de 5 cts (radios de 79.3 y 76.2 píxeles) cuando en la realidad es justo al revés. Las monedas tienen varios bordes (el canto, el aro interior, la sombra) y Hough se puede quedar con cualquiera de ellos. Además, como todo se calibra con la moneda de 1€, si su radio sale un poco pequeño todas las demás salen infladas. La de 2 cts es la que más lo sufre, porque solo hay 1 mm de diferencia con la de 10 cts: la frontera está en 19.25 mm y la nuestra salió en 19.55 mm.
+Mirando los números nos dimos cuenta de que el radio que da Hough no es nada preciso. Por ejemplo, la moneda de 10 cts salía más grande que la de 5 cts (radios de 79.3 y 76.2 píxeles) cuando en la realidad es justo al revés. Las monedas tienen varios bordes (el canto, el aro interior, la sombra) y Hough se puede quedar con cualquiera de ellos. Además, como todo se calibra con la moneda de 1€, si su radio sale un poco pequeño todas las demás salen infladas. La de 2 cts es la que más lo sufre, porque solo hay 1 mm de diferencia con la de 10 cts.
 
 Solución:
 
@@ -59,41 +59,47 @@ Se dejó Hough solo para saber **dónde** está cada moneda, y el tamaño se pas
 
 La función `measure_diameter` busca el contorno que contiene el centro del círculo de Hough (`cv2.pointPolygonTest`) y calcula el diámetro a partir de su área: `d = sqrt(4 * A / π)`. Como el área sale de muchos píxeles, el error es mucho menor que con el radio de Hough. Con este cambio las 8 monedas se clasifican bien y el total es 3.88€.
 
-| Círculos detectados con Hough | Salida con el primer intento | Salida final |
-| :---: | :---: | :---: |
-| <img src="img/tarea1_1_hough.jpg" width="250"/> | <img src="img/tarea1_2_salida_error.png" width="250"/> | <img src="img/tarea1_3_salida_final.png" width="250"/> |
+| Círculos detectados con Hough | Salida final |
+| :---: | :---: |
+| <img src="img/tarea1_1_hough.jpg" width="350"/> | <img src="img/tarea1_2_salida_final.png" width="350"/> |
 
+  
 **Demostrador en vivo**
 
 Desarrollo:
 
-Se reutilizó el mismo procedimiento dentro del bucle de la cámara (`cv2.VideoCapture`), poniendo las monedas sobre un folio blanco. En cada fotograma se pasa a grises, se calculan los contornos con el mismo umbral y se buscan los círculos con Hough. Al hacer clic en la moneda de 1€ se calcula `pix_to_mm`, y desde ese momento el total se recalcula en cada fotograma y se escribe en pantalla con `cv2.putText`.
+El demostrador usa la misma idea (relación píxeles/mm calibrada con la moneda de 1€), pero la forma de encontrar las monedas es distinta. En una escena real hay más cosas que las monedas (la mesa, el borde del folio, otros objetos), así que el bucle de la cámara (`cv2.VideoCapture`) hace tres pasos en cada fotograma:
 
-Respecto a la versión de la imagen ideal hubo que cambiar algunas cosas:
+1. Encontrar el folio. Se suaviza el fotograma en grises (`cv2.medianBlur`), se umbraliza con Otsu y se coge el contorno de mayor área, que es el folio. Ese contorno se simplifica con `cv2.approxPolyDP` hasta que queda como un cuadrilátero y con él se dibuja una máscara de la zona de detección. A la máscara se le pone un borde negro de 20 píxeles para quitar el borde del folio y sus sombras. Así, lo que hay fuera del folio no se tiene en cuenta.  
+  
+2. Encontrar las monedas dentro del folio. Dentro de esa zona se vuelve a umbralizar con Otsu, esta vez invertido para que las monedas (más oscuras que el folio) salgan en blanco, se hace un cierre morfológico y se sacan los contornos. A cada contorno se le ajusta una elipse con `cv2.fitEllipse`. Se descartan las elipses cuyos dos ejes se diferencian en más de 20 píxeles (no son redondas, así que no son monedas o son monedas pegadas) y las de área menor de 200 píxeles (ruido). El radio de cada moneda sale de la media de los dos ejes.
+  
+3. Calcular el dinero. Las monedas se guardan en `circ` con el mismo formato que daba Hough (centro y radio), así que `search_clicked_coin` y `count_money` se reutilizan casi igual. Al hacer clic en la moneda de 1€ se calcula `pix_to_mm` y, desde ese momento, el total se recalcula en cada fotograma y se escribe en pantalla con `cv2.putText`.
 
-- `count_money` ahora devuelve el total en lugar de imprimirlo. Si no, escribía decenas de líneas por segundo en la consola.
-- `count_money` comprueba que haya círculos (`circ is not None`), porque en vivo hay fotogramas en los que Hough no encuentra ninguno y se rompía.
-- Los contornos se calculan con la imagen en grises antes de dibujar los círculos verdes, para que lo dibujado no cambie la medida.
+En esta versión ya no se usa Hough: el diámetro sale directamente de la elipse.
+
+Además se añadió un seguimiento de la moneda de referencia. En cada fotograma se busca la moneda más cercana a la última posición de la moneda de 1€ y con ella se vuelve a calcular `pix_to_mm`. La idea es que la escala se vaya actualizando si la moneda se mueve por el folio o cambia un poco la distancia de la cámara.
+
+Respecto a la versión de la imagen ideal, `count_money` ahora devuelve el total en lugar de imprimirlo (si no, escribía decenas de líneas por segundo en la consola) y comprueba que haya círculos (`circ is not None`).
 
 ¿Funciona correctamente? ¿Se observan problemas?
 
-Con las monedas sobre el folio blanco y buena luz funciona bien. Los problemas principales son:
+Funciona con el folio bien iluminado y las monedas separadas entre sí. Los problemas que tiene el método son:
 
-- **Depende de la iluminación.** El umbral está fijo en 200, así que el folio tiene que verse casi blanco en toda la imagen. Si se ve grisáceo (sombras, poca luz, esquinas oscuras), todo el folio pasa a ser un único contorno enorme y el total sale mal.
-- **Hough no siempre detecta todas las monedas.** Alguna moneda pequeña puede dejar de detectarse en algunos fotogramas y el total cambia de un fotograma a otro.
-- **Objetos que no son monedas.** Ahora mismo cualquier círculo que detecta Hough se cuenta como la moneda más parecida (`min_diference = 1000`), así que un objeto redondo sumaría dinero.
-- **Monedas solapadas.** Si dos monedas se tocan, sus contornos se unen en uno solo y el diámetro sale demasiado grande.
+- Depende de que el folio se distinga bien de la mesa. Si no hay contraste, Otsu no lo separa y la zona de detección sale mal.
 
-| Demostrador sin calibrar | Demostrador con el total |
-| :---: | :---: |
-| <img src="img/tarea1_4_demo_sin_calibrar.jpg" width="300"/> | <img src="img/tarea1_5_demo_total.jpg" width="300"/> |
+- Las monedas también se separan con un umbral de Otsu para toda la imagen, así que una moneda muy clara (dorada o plateada con mucho brillo) puede quedar por encima del umbral y no detectarse.
+
+- Los objetos que no son redondos se descartan con el filtro de la elipse, pero un objeto redondo (una chapa, por ejemplo) se cuenta como la moneda que más se le parezca, porque `min_diference` empieza en 1000.
+
+- Las monedas solapadas no se cuentan: al juntarse forman un contorno que no es redondo y se descarta. No suma de más, pero su valor no aparece.
+
+- El seguimiento siempre se queda con la moneda más cercana a la posición anterior. Si se retira la de 1€, se recalibra con otra moneda como si fuera de 1€ y el total sale mal.
+
 
 #### Demostración de uso
 
-
 https://github.com/user-attachments/assets/717124f9-7895-4717-ab6b-e7ede48aff07
-
-
 
 #### Tarea 2: Clasificación de microplásticos
 Objetivo: extraer las partículas de una imagen de test (`MPs_test.jpg`) y clasificarlas en tres clases: fragmentos (FRA), pellets (PEL) y alquitrán (TAR). Solo se pueden usar las imágenes de entrenamiento para construir el clasificador, la imagen de test se usa únicamente para evaluar con sus anotaciones (`MPs_test_bbs.csv`). No se usa aprendizaje profundo ni para segmentar ni para clasificar.
@@ -104,12 +110,12 @@ El procedimiento tiene cuatro partes: segmentar, calcular características, clas
 
 **1. Segmentación**
 
-Según el enunciado, el umbralizado es delicado para separar las partículas del fondo, así que se probó a no depender de un único valor de gris:
+Según el enunciado, el umbralizado es delicado para separar las partículas del fondo, así que se intentó no depender de un único valor de gris:
 
 - Se suaviza la imagen con `cv2.GaussianBlur`.
 - Se estima el fondo con una mediana muy grande (`cv2.medianBlur` con tamaño 31 sobre la imagen reducida al 10 %). Así se compensa que la luz no sea uniforme y las partículas no cuentan como fondo.
 - Se calcula la diferencia con el fondo (`cv2.absdiff`) y se coge la mayor entre los tres canales de color. De esta forma se detecta una partícula tanto si es más clara, más oscura o simplemente de otro color que el fondo.
-- Se umbraliza esa diferencia con Otsu, pero limitando el valor entre 10 y 25. Sin ese límite, Otsu se dejaba llevar por el alquitrán, que es muy oscuro, y se perdían las partículas claras.
+- Se umbraliza esa diferencia con Otsu, pero limitando el valor entre 10 y 25. Sin ese límite, Otsu se deja llevar por el alquitrán, que es muy oscuro, y se pierden las partículas claras.
 - Se limpia con una apertura y un cierre morfológicos, se sacan los contornos externos (`cv2.RETR_EXTERNAL`) y se descartan los de menos de 100 píxeles de área, que son ruido.
 
 **2. Características**
@@ -148,36 +154,43 @@ Partículas segmentadas en cada imagen de entrenamiento (en el enunciado se dice
 | :---: | :---: | :---: |
 | 11 | 11 | 8 |
 
+Es decir, la segmentación solo recupera una parte pequeña de las partículas de entrenamiento, y el clasificador se queda con 30 muestras en total.
+
 Resultados en la imagen de test:
 
 - Partículas segmentadas: 90
-- Anotaciones sin partícula segmentada: 36
+- Anotaciones sin partícula segmentada: 36 de 120 (las otras 84 se han podido clasificar)
 
 | Accuracy | Precision | Recall | F1 Score |
 | :---: | :---: | :---: | :---: |
-| 0.79 | 0.80 | 0,79 | 0.78 |
+| 0.786 | 0.798 | 0.786 | 0.776 |
 
-Las tres últimas métricas están calculadas con `average='weighted'`, es decir, promediando las clases según el número de muestras que tiene cada una.
+Las tres últimas métricas están calculadas con `average='weighted'`, es decir, promediando las clases según el número de muestras que tiene cada una. Todas se calculan solo con las 84 partículas que se han podido emparejar con una anotación. Si las 36 que no se segmentan se contaran como fallo, el acierto sería 66 de 120, un 55 %.
 
 | Matriz de confusión | Resultado sobre la imagen |
 | :---: | :---: |
-| <img width="350" alt="image" src="https://github.com/user-attachments/assets/ab1ef488-648c-4b01-87ec-e281d5c93c0e" /> | <img width="350" alt="image" src="https://github.com/user-attachments/assets/8cee6a6e-2b1b-4924-a577-b63f00c35cbb" /> |
+| <img src="img/tarea2_3_matriz_confusion.png" width="350"/> | <img src="img/tarea2_4_resultado.png" width="300"/> |
 
-En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Las confusiones más habituales son entre FRA y PEL.
+En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Por clases:
+
+| Clase | Partículas | Bien clasificadas | Recall | Precision |
+| :---: | :---: | :---: | :---: | :---: |
+| FRA | 48 | 45 | 93.8 % | 76.3 % |
+| PEL | 25 | 14 | 56.0 % | 77.8 % |
+| TAR | 11 | 7 | 63.6 % | 100 % |
+
+Los fragmentos se reconocen bastante bien, pero el clasificador tiende a decir FRA: 11 de los 25 pellets y 3 de los 11 alquitranes se clasifican como fragmento. El alquitrán, cuando se predice, siempre acierta (nadie más cae en esa columna), pero se escapan 4 de 11. En la imagen de resultado se ve que los pellets que no se clasifican bien suelen ser los más claros y que muchas partículas claras o transparentes ni siquiera se segmentan (son las que no tienen contorno de color).
 
 Problemas y mejoras:
 
-- Si dos partículas están pegadas, la segmentación las junta en un solo contorno y esa anotación no se clasifica bien.
+- La segmentación es el punto débil. 36 de las 120 anotaciones no tienen partícula, y en entrenamiento se detectan muy pocas partículas respecto a las que hay. El límite de 25 en el umbral ayuda con las claras, pero las más transparentes siguen sin salir.
+- Con tan pocas muestras de entrenamiento (11, 11 y 8) el clasificador es poco fiable, sobre todo para el alquitrán.
 - En el entrenamiento no se descartan las partículas que quedan cortadas por el borde de la imagen, y esas tienen una forma que no es la real.
-- El clasificador depende mucho de la segmentación: si el contorno no es bueno, las características tampoco.
-- Una mejora posible sería separar las partículas unidas con *watershed*, o probar más características de color o textura.
+- Si dos partículas están pegadas, la segmentación las junta en un solo contorno y esa anotación no se clasifica bien.
+- Como mejoras posibles: ecualizar el histograma o bajar el límite del umbral para detectar más partículas claras, separar las partículas unidas con *watershed*, o añadir más características de color o textura.
 
 ### 4. Uso de herramientas de IA
-Para esta práctica hemos utilizado Claude (Anthropic) como asistente:
 
-- **Tarea 1:** nos ayudó a entender por qué la moneda de 2 cts se clasificaba mal con el radio de Hough y propuso medir el diámetro con el área del contorno. También adaptó ese código al bucle de la cámara.
-- **Tarea 2:** propuso el esquema de trabajo (segmentación, características de SMACC, clasificador de vecinos más cercanos y evaluación) y escribió el código del cuaderno.
-- **README:** el borrador de este documento también se hizo con su ayuda, a partir de nuestro código y del README de la práctica anterior.
 
 ### 5. Bibliografía y Fuentes Consultadas
 
