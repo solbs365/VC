@@ -113,9 +113,13 @@ El procedimiento tiene cuatro partes: segmentar, calcular características, clas
 Según el enunciado, el umbralizado es delicado para separar las partículas del fondo, así que se intentó no depender de un único valor de gris:
 
 - Se suaviza la imagen con `cv2.GaussianBlur`.
+
 - Se estima el fondo con una mediana muy grande (`cv2.medianBlur` con tamaño 31 sobre la imagen reducida al 10 %). Así se compensa que la luz no sea uniforme y las partículas no cuentan como fondo.
+
 - Se calcula la diferencia con el fondo (`cv2.absdiff`) y se coge la mayor entre los tres canales de color. De esta forma se detecta una partícula tanto si es más clara, más oscura o simplemente de otro color que el fondo.
+
 - Se umbraliza esa diferencia con Otsu, pero limitando el valor entre 10 y 25. Sin ese límite, Otsu se deja llevar por el alquitrán, que es muy oscuro, y se pierden las partículas claras.
+
 - Se limpia con una apertura y un cierre morfológicos, se sacan los contornos externos (`cv2.RETR_EXTERNAL`) y se descartan los de menos de 100 píxeles de área, que son ruido.
 
 **2. Características**
@@ -136,9 +140,9 @@ Se usó el rectángulo girado y no el vertical para que la característica no de
 
 **3. Clasificador**
 
-Las imágenes de entrenamiento (`FRA.png`, `PEL.png` y `TAR.png`) tienen partículas de una sola clase cada una, así que cada partícula que se segmenta ya viene etiquetada. Se calculan sus características y se normalizan con la media y la desviación del conjunto de entrenamiento, para que ninguna pese más que otra solo por tener números más grandes (el área, por ejemplo).
+Las imágenes de entrenamiento (`FRA.png`, `PEL.png` y `TAR.png`) tienen partículas de una sola clase cada una, así que cada partícula que se segmenta ya viene etiquetada. Se calculan sus características y se normalizan con la media y la desviación del conjunto de entrenamiento, para que ninguna pese más que otra solo por tener números más grandes (como por ejemplo, el area).
 
-Para clasificar una partícula nueva se hizo un clasificador de los k vecinos más cercanos programado a mano con `numpy`: se calcula la distancia a todas las muestras de entrenamiento, se cogen las 3 más cercanas y se asigna la clase que más se repite. No se usa ningún modelo de `scikit-learn`, esa librería solo se utiliza para las métricas.
+Para clasificar una partícula nueva se hizo un clasificador de los k vecinos más cercanos programado con `numpy`: se calcula la distancia a todas las muestras de entrenamiento, se cogen las 3 más cercanas y se asigna la clase que más se repite. No se usa ningún modelo de `scikit-learn`, esa librería solo se utiliza para las métricas.
 
 **4. Evaluación**
 
@@ -169,7 +173,7 @@ Las tres últimas métricas están calculadas con `average='weighted'`, es decir
 
 | Matriz de confusión | Resultado sobre la imagen |
 | :---: | :---: |
-| <img src="img/tarea2_3_matriz_confusion.png" width="350"/> | <img src="img/tarea2_4_resultado.png" width="300"/> |
+| <img src="img/tarea2_2.jpg" width="350"/> | <img src="img/tarea2_1.jpg" width="300"/> |
 
 En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Por clases:
 
