@@ -150,7 +150,7 @@ Se segmenta la imagen de test y se calculan las características igual que en el
 
 | Segmentación de las imágenes de entrenamiento | Segmentación del test |
 | :---: | :---: |
-| <img src="img/tarea2_1_entrenamiento.jpg" width="600"/> | <img src="img/tarea2_2_test_segmentado.jpg" width="200"/> |
+| <img src="img/tarea2_1_entrenamiento.jpg" height="250"/> | <img src="img/tarea2_2_test_segmentado.jpg" height="250"/> |
 
 Partículas segmentadas en cada imagen de entrenamiento (en el enunciado se dice que hay unas 80 de fragmentos, 55 de pellets y 54 de alquitrán):
 
@@ -173,7 +173,7 @@ Las tres últimas métricas están calculadas con `average='weighted'`, es decir
 
 | Matriz de confusión | Resultado sobre la imagen |
 | :---: | :---: |
-| <img src="img/tarea2_2.jpg" height="250"/> | <img src="img/tarea2_1.jpg" height="250"/> |
+| <img src="img/tarea2_2.jpg" width="490"/> | <img src="img/tarea2_1.jpg" width="300"/> |
 
 En la matriz, las filas son la clase anotada y las columnas la predicha, así que la diagonal son los aciertos. Por clases:
 
