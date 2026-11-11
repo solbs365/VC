@@ -1,0 +1,6 @@
+*.pt
+*.MP4
+*.zip
+
+runs/*
+UC3M-LP-yolo/*

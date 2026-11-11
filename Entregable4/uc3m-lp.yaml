@@ -1,0 +1,9 @@
+# training and validation data
+path: ./UC3M-LP-yolo/LP
+train: images/train
+val: images/val
+
+# number of classes
+nc: 1
+
+names: [ 'license plate' ]

@@ -1,0 +1,4 @@
+person: 13
+car: 34
+motorbike: 1
+truck: 1
