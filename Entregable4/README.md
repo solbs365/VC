@@ -15,8 +15,6 @@ El trabajo se divide en 2 tareas principales:
 - Tarea 1 (práctica 4): Detección y seguimiento de personas y vehículos, y detección de matrículas.
 - Tarea 2 (práctica 4b): Lectura del texto de las matrículas y comparativa entre un OCR clásico (easyOCR) y un VLM (SmolVLM2).
 
-No hemos abordado ninguno de los extras opcionales del enunciado (flujo de personas y vehículos por direcciones, comparativa entre YOLO y RT-DETR, detección de matrículas con contornos y anonimización).
-
 **Archivos de la entrega**
 
 | Archivo | Contenido |
@@ -24,7 +22,7 @@ No hemos abordado ninguno de los extras opcionales del enunciado (flujo de perso
 | `P4.ipynb` | Cuaderno con todo el código: entrenamiento, detección y seguimiento, OCR y comparativa |
 | `uc3m-lp.yaml` | Rutas del dataset y clase para entrenar el detector de matrículas |
 | `results_ocr.csv` | csv completo del vídeo de test (8547 detecciones, fotogramas 1 a 2832) con la columna `text_matrícula` |
-| `results.csv` | Muestra del csv con los primeros 103 fotogramas (207 filas) |
+| `results_sin_ocr.csv` | csv de la primera ejecución, sin OCR y con el detector de 50 épocas (8320 filas y 14 columnas, sin `text_matrícula`). El cuaderno lo guarda como `results.csv` y lo hemos renombrado para distinguirlo del otro |
 | `total.txt` | Total de personas y vehículos contados en el vídeo |
 | `plates.txt` | Matrícula de cada una de las 100 imágenes usadas en la comparativa |
 | `OCRvcVLM.csv` | Resultado de la comparativa imagen por imagen |
@@ -33,10 +31,10 @@ No hemos abordado ninguno de los extras opcionales del enunciado (flujo de perso
 | `graficas_entrenamiento.py` | Dibuja la comparativa de los entrenamientos a partir de los `results.csv` de `entrenamientos/` |
 | `graficas_ocr.py` | Calcula las métricas y dibuja las gráficas de la comparativa a partir de `OCRvcVLM.csv` |
 
-Por su tamaño no hemos podido subir a GitHub el dataset en formato YOLO (casi 300 MB comprimido), las carpetas `runs` con los pesos entrenados ni los vídeos. Todo eso está en la siguiente carpeta: [Artefactos](https://drive.google.com/drive/folders/19SrdybOELqg3lmdABGIDcE2uSf_Rx5c8?usp=sharing).   
-  
-El dataset original se descarga desde el repositorio: https://github.com/ramajoballester/UC3M-LP.   
-  
+Por su tamaño no hemos podido subir a GitHub el dataset en formato YOLO (casi 300 MB comprimido), las carpetas `runs` con los pesos entrenados ni los vídeos. Todo eso está en la siguiente carpeta: [Artefactos](https://drive.google.com/drive/folders/19SrdybOELqg3lmdABGIDcE2uSf_Rx5c8?usp=sharing).
+
+El dataset original se descarga desde el repositorio: https://github.com/ramajoballester/UC3M-LP.
+
 De cada entrenamiento hemos subido el `results.csv` y el `args.yaml`, que son con los que analizamos más abajo la evolución del entrenamiento.
 
 ### 2. Paquetes necesarios
@@ -120,13 +118,13 @@ Las métricas son las de la última época sobre el conjunto de validación (`im
 
 Análisis:
 
-*Evolución de las pérdidas.* En el entrenamiento de 100 épocas las pérdidas de entrenamiento y de validación bajan a la vez durante todo el proceso. La pérdida de caja pasa de 1.57 a 0.53 en entrenamiento y de 1.04 a 0.52 en validación, y la de clasificación de 7.85 a 0.19 y de 2.07 a 0.20. Al final las dos curvas casi se tocan (0.534 frente a 0.524 en la caja), así que no vemos señales de sobreajuste. En las últimas épocas la pérdida de validación baja ya muy despacio. En la época 91 se ve un salto hacia abajo de la pérdida de entrenamiento (de 0.639 a 0.578), que coincide con las últimas 10 épocas, en las que Ultralytics desactiva el aumento por mosaico (`close_mosaic=10`).
+*Evolución de las pérdidas.* En el entrenamiento de 100 épocas las pérdidas de entrenamiento y de validación bajan a la vez durante todo el proceso. La pérdida de caja pasa de 1.57 a 0.53 en entrenamiento y de 1.04 a 0.52 en validación, y la de clasificación de 7.85 a 0.19 y de 2.07 a 0.20. Al final las dos curvas casi se tocan (0.534 frente a 0.524 en la caja), así que no vemos señales de sobreajuste. En las últimas épocas la pérdida de validación baja ya muy despacio. Hacia la época 90 se ve un salto hacia abajo de la pérdida de entrenamiento, que coincide con las últimas 10 épocas, en las que Ultralytics desactiva el aumento por mosaico (`close_mosaic=10`).
 
 *Evolución de las métricas.* El mAP50 ya es de 0.96 en la primera época y termina en 0.993. Es decir, con un IoU de 0.5 el detector funciona bien casi desde el principio, algo esperable porque partimos de pesos preentrenados y la matrícula es un objeto fácil de localizar en este dataset. Donde se nota el entrenamiento es en el mAP50-95, que exige cajas más ajustadas: sube de 0.69 a 0.878 y todavía crecía despacio al terminar. La precisión y el recall se estabilizan en torno a 0.98 y 0.99 pasadas las primeras épocas.
 
 *Comparación entre entrenamientos.* Con 20, 50 y 100 épocas el mAP50 es casi idéntico (0.9925, 0.9929 y 0.9933) y la diferencia está en el mAP50-95 (0.859, 0.869 y 0.878): entrenar más ajusta mejor la caja, pero cada vez se gana menos. Las curvas no se pueden comparar época a época, porque la tasa de aprendizaje baja de forma lineal hasta la última época prevista y un entrenamiento corto la baja antes. Por eso en la gráfica el de 20 épocas tiene menos pérdida que el de 100 en las mismas épocas. El modelo grande (`yolo26x`) llega a un mAP50-95 de 0.906 y mejora un poco la precisión y el recall, pero tardó 138 minutos frente a 16.5 del nano de 100 épocas (unos 118 segundos por época frente a 10) y sus pesos ocupan 118 MB frente a 5.5 MB. Como en cada fotograma del vídeo se ejecutan dos modelos, nos quedamos con el nano de 100 épocas para el vídeo con OCR y la comparativa. Las curvas del `yolo26x` están en el desplegable de abajo.
 
-*Matriz de confusión, PR y F1.* La matriz detecta las 491 matrículas de validación (la casilla de matrículas sin detectar está vacía) y marca además 453 predicciones sobre el fondo. Esa cifra llama la atención con una precisión de 0.98. Creemos que se debe a que la matriz incluye detecciones de confianza muy baja, pero no lo hemos comprobado. La curva precisión-recall da un AP50 de 0.993 y la curva F1 tiene su máximo (0.98) con una confianza de 0.552, siendo bastante plana entre 0.1 y 0.8. En el vídeo usamos el umbral por defecto (0.25), que cae dentro de esa zona plana.
+*Matriz de confusión, PR y F1.* La matriz detecta las 491 matrículas de validación (la casilla de matrículas sin detectar está vacía). La curva precisión-recall da un AP50 de 0.993 y la curva F1 tiene su máximo (0.98) con una confianza de 0.552, siendo bastante plana entre 0.1 y 0.8. En el vídeo usamos el umbral por defecto (0.25), que cae dentro de esa zona plana.
 
 *Limitación.* No hemos separado un conjunto de test: el `images/val` es el que usa Ultralytics para elegir el mejor modelo y el que usamos para dar estas métricas, así que son algo optimistas. La prueba real es el vídeo, que tiene otras condiciones (más abajo).
 
@@ -154,7 +152,7 @@ El csv sigue el formato sugerido en el enunciado, con `;` como separador:
 fotograma;tipo_objeto;confianza;identificador_tracking;x1;y1;x2;y2;matrícula_en_su_caso;confianza;mx1;my1;mx2;my2;text_matrícula
 ```
 
-Para las personas, y para los vehículos en los que no se ha encontrado matrícula, los campos de la matrícula llevan `false` y `null`. Las dos columnas `confianza` son la del objeto y la de la matrícula, en ese orden. La última columna (`text_matrícula`) se rellena en la tarea 2.
+Para las personas, y para los vehículos en los que no se ha encontrado matrícula, los campos de la matrícula llevan `false` y `null`. Las dos columnas `confianza` son la del objeto y la de la matrícula, en ese orden. La última columna (`text_matrícula`) se rellena en la tarea 2, así que el csv de la primera ejecución (`results_sin_ocr.csv`) no la tiene.
 
 Para contar el total de cada clase se guarda, para cada identificador de seguimiento, la clase del objeto (`track_history`). Al terminar el vídeo se cuenta cuántos identificadores hay de cada clase y se escribe en `total.txt`.
 
@@ -197,7 +195,7 @@ Al analizar el csv nos encontramos con varias limitaciones:
 
 - **Detecciones sin identificador.** 347 filas (314 de coches, 32 de personas y 1 de camión) no tienen identificador de seguimiento en ese fotograma. Esas filas no cuentan en el total, aunque el mismo objeto sí puede tener identificador en otros fotogramas.
 
-- **La matrícula solo se detecta en el 22 % de las filas de vehículo.** Las cajas de las matrículas son muy pequeñas en el vídeo (la mediana mide unos 52 x 13 píxeles) y, además, el detector se ha entrenado con las imágenes de UC3M-LP, que son distintas de las del vídeo de test. Se nota que las métricas de validación no se trasladan directamente al vídeo: en la ejecución sin OCR, con el modelo de 50 épocas, salían matrículas en el 31 % de las filas de vehículo, frente al 22 % del modelo de 100 épocas, aunque este último tiene mejor mAP50-95 en validación. No hemos comprobado cuál de los dos acierta más en el vídeo porque no tenemos anotaciones de él.
+- **La matrícula solo se detecta en el 22 % de las filas de vehículo.** Las cajas de las matrículas son muy pequeñas en el vídeo (la mediana mide unos 52 x 13 píxeles) y, además, el detector se ha entrenado con las imágenes de UC3M-LP, que son distintas de las del vídeo de test. Se nota que las métricas de validación no se trasladan directamente al vídeo: en la ejecución sin OCR, con el modelo de 50 épocas (`results_sin_ocr.csv`), salían matrículas en el 31 % de las filas de vehículo (1790 de 5719), frente al 22 % del modelo de 100 épocas, aunque este último tiene mejor mAP50-95 en validación. No hemos comprobado cuál de los dos acierta más en el vídeo porque no tenemos anotaciones de él.
 
 - **La asociación de matrícula a vehículo es estricta.** Exigimos que la caja de la matrícula esté completamente dentro de la del vehículo, así que si queda justo en el borde o el vehículo está recortado, la matrícula se pierde para ese fotograma. Además solo se guarda la primera que cumple la condición.
 
@@ -229,6 +227,8 @@ Cuando el detector encuentra una matrícula dentro de un vehículo, se recorta e
 
 3. **Validación del formato.** El texto leído se pasa por una expresión regular (`\d{4}[A-Z]{3}`), que es el formato de las matrículas españolas actuales: cuatro números y tres letras. Se guarda lo que encaja con ese patrón y, si no hay nada que encaje, se escribe `null`.
 
+El texto leído solo se guarda en la columna `text_matrícula` del csv. En el vídeo de salida se dibuja la caja de la matrícula con su identificador, pero no el texto.
+
 
 Resultados sobre el vídeo de test:
 
@@ -239,6 +239,8 @@ De las 1295 filas con matrícula detectada, el `text_matrícula` queda así:
 | Matrícula válida | 155 (12.0 %) | easyOCR devolvió texto con formato de matrícula |
 | `null` | 949 | easyOCR devolvió texto, pero no cumplía el formato |
 | `null` (corregida) | 191 | easyOCR no devolvió nada, y en el csv original esas filas se quedaban sin la última columna |
+
+Cuando easyOCR no devuelve nada, el cuaderno no escribe nada en la última columna, y esas 191 filas salían con un campo de menos. Les añadimos el `null` a mano sobre el csv después de generarlo, así que el `results_ocr.csv` que entregamos no es exactamente el que escribe el cuaderno.
 
 Solo 13 de los 29 vehículos con matrícula detectada tienen alguna lectura válida. Las 155 lecturas son 90 textos distintos, porque el mismo coche se lee de forma un poco distinta en cada fotograma (se hace una lectura por fotograma, sin combinarlas). Esta tabla resume, para cada uno de esos 13 vehículos, cuántas lecturas válidas tiene y cuál es la más frecuente:
 
@@ -291,6 +293,8 @@ Equipo en el que se han hecho las pruebas (los tiempos dependen mucho de él):
 | GPU | RTX 3060 |
 | Python | 3.9.23 |
 
+SmolVLM2 se ejecutó en la GPU (`Device = "cuda"` en el cuaderno). easyOCR también, porque `Reader` usa la GPU por defecto cuando hay CUDA disponible.
+
 Resultados:
 
 | Modelo | Aciertos exactos | A lo sumo 1 error | Longitud correcta | Lecturas vacías | CER | Tiempo medio | Tiempo mediano |
@@ -317,7 +321,7 @@ Algunos ejemplos de lo que devuelve cada modelo:
 
 Conclusiones:
 
-- **En acierto exacto están empatados**, con 10 matrículas de 100 cada uno, y no son las mismas: solo 2 las aciertan los dos a la vez y hay 18 que acierta al menos uno. Es una tasa muy baja para los dos, y hay que tener en cuenta que el criterio es exigente por los caracteres tapados del dataset, que afectan por igual a los dos modelos.
+- **En acierto exacto están empatados**, con 10 matrículas de 100 cada uno, y no son las mismas: solo 2 las aciertan los dos a la vez y hay 18 en las que acierta al menos uno. Es una tasa muy baja para los dos, y hay que tener en cuenta que el criterio es exigente por los caracteres tapados del dataset, que afectan por igual a los dos modelos.
 
 - **El VLM es mucho más lento.** Tarda de media 0.76 s por matrícula frente a 0.0063 s de easyOCR, es decir, unas 120 veces más. La primera imagen es más lenta en los dos (1.63 s y 0.04 s) por el calentamiento. En el caso de easyOCR hay que tener en cuenta que el tiempo mediano (0.0025 s) está bajado por las lecturas vacías, que terminan casi al instante. Si solo se cuentan las lecturas con texto, la media sube a 0.0105 s, y sigue siendo unas 70 veces más rápido.
 
@@ -339,7 +343,7 @@ Problemas:
 
 #### Vídeo de test procesado
 
-https://drive.google.com/drive/folders/19SrdybOELqg3lmdABGIDcE2uSf_Rx5c8
+El vídeo de test procesado (`output.MP4`) está en la carpeta de artefactos: [Artefactos](https://drive.google.com/drive/folders/19SrdybOELqg3lmdABGIDcE2uSf_Rx5c8?usp=sharing).
 
 ### 4. Bibliografía y Fuentes Consultadas
 
