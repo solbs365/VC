@@ -229,10 +229,6 @@ Cuando el detector encuentra una matrícula dentro de un vehículo, se recorta e
 
 3. **Validación del formato.** El texto leído se pasa por una expresión regular (`\d{4}[A-Z]{3}`), que es el formato de las matrículas españolas actuales: cuatro números y tres letras. Se guarda lo que encaja con ese patrón y, si no hay nada que encaje, se escribe `null`.
 
-| Recortes de matrículas tras el preprocesado | Fotograma con la matrícula leída |
-| :---: | :---: |
-| <img src="img/tarea2_2_preprocesado.jpg" width="450"/> | <img src="img/tarea2_3_matricula_leida.jpg" width="450"/> |
-
 
 Resultados sobre el vídeo de test:
 
@@ -264,7 +260,6 @@ Solo 13 de los 29 vehículos con matrícula detectada tienen alguna lectura vál
 
 Solo el identificador 40 se lee de forma estable (30 de 34 lecturas son iguales). En el 8 la lectura más frecuente aparece en algo más de la mitad de las lecturas (10 de 19) y en el 48 en una cuarta parte (6 de 23), y las demás difieren en uno o dos caracteres (por ejemplo `3713LXC` y `3713LKC`). En el resto, la lectura más frecuente aparece pocas veces (entre 1 y 5). Esta tabla no está en el csv, solo la hemos calculado para el README.
 
-> **PENDIENTE:** como no tenemos las matrículas reales del vídeo, estas lecturas no se han podido evaluar con una métrica. Comprobar a ojo en el vídeo al menos las de los identificadores 40, 8 y 48 y escribir aquí si coinciden con la matrícula que se ve.
 
 **Comparativa entre easyOCR y SmolVLM2**
 
@@ -285,16 +280,15 @@ Una particularidad del dataset condiciona esta comparativa: **todas las matrícu
 | :---: |
 | <img src="img/tarea2_1_recorte_enmascarado.jpg" width="320"/> |
 
-*El recorte es el de la carpeta `OCR` del dataset, no el que saca nuestro detector, pero tiene los mismos recuadros grises.*
 
 Equipo en el que se han hecho las pruebas (los tiempos dependen mucho de él):
 
 | Componente | Valor |
 | :--- | :--- |
 | Sistema operativo | Linux |
-| Procesador | **PENDIENTE** |
-| Memoria RAM | **PENDIENTE** |
-| GPU (indicar también si easyOCR se ejecutó en GPU) | **PENDIENTE** |
+| Procesador | Ryzen 7 7800x3d |
+| Memoria RAM | 32 GB |
+| GPU | RTX 3060 |
 | Python | 3.9.23 |
 
 Resultados:
