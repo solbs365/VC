@@ -1,6 +1,8 @@
 *.pt
 *.MP4
 *.zip
+*.csv
+*.txt
 
 runs/*
 UC3M-LP-yolo/*
