@@ -162,7 +162,6 @@ Para contar el total de cada clase se guarda, para cada identificador de seguimi
 | :---: | :---: |
 | <img src="img/tarea1_1_deteccion.jpg" width="450"/> | <img src="img/tarea1_2_matriculas.jpg" width="450"/> |
 
-> **PENDIENTE:** sacar dos capturas del vídeo de salida (`output.MP4`). La primera, `tarea1_1_deteccion.jpg`, con varias personas y vehículos con su caja e identificador. La segunda, `tarea1_2_matriculas.jpg`, con un fotograma donde se vea bien la caja de una matrícula dentro de un vehículo.
 
 **Resultados sobre el vídeo de test**
 
@@ -234,16 +233,6 @@ Cuando el detector encuentra una matrícula dentro de un vehículo, se recorta e
 | :---: | :---: |
 | <img src="img/tarea2_2_preprocesado.jpg" width="450"/> | <img src="img/tarea2_3_matricula_leida.jpg" width="450"/> |
 
-> **PENDIENTE (hay que cambiar el código antes de entregar):** el enunciado pide que el vídeo de test muestre la matrícula leída, y ahora mismo `P4.ipynb` solo dibuja la caja y la etiqueta `identificador plate`, el texto leído no se escribe en el vídeo. Además, cuando easyOCR no devuelve nada, la fila del csv se queda sin la última columna (en vez de llevar `null`). Se arregla sustituyendo el bloque `if len(ocr_res) > 0:` de la celda con OCR por:
->
-> ```python
-> ocr_text = search_plate(ocr_text)
-> csv_string += f";{ocr_text if ocr_text != '' else 'null'}"
-> if ocr_text != "":
->     cv2.putText(frame, ocr_text, (lpx1, lpy1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
-> ```
->
-> Después hay que volver a ejecutar la celda para regenerar `output.MP4` y `results_ocr.csv`. Si no da tiempo, el `results_ocr.csv` que acompaña a este README ya tiene corregidas las 191 filas con ese problema (se les ha añadido `;null`), pero el vídeo sí hay que regenerarlo. Hacer las dos capturas de esta tabla (`tarea2_2_preprocesado.jpg` son las ventanas de depuración con `PLATE_FRAME_DEBUG = True` y `tarea2_3_matricula_leida.jpg` es un fotograma del vídeo con el texto sobre un vehículo) y borrar este aviso.
 
 Resultados sobre el vídeo de test:
 
@@ -356,7 +345,7 @@ Problemas:
 
 #### Vídeo de test procesado
 
-> **PENDIENTE:** poner aquí el vídeo `output.MP4` ya con el texto de las matrículas visible. Se puede arrastrar al editor del README en GitHub para que genere el enlace (como en la práctica 3) o, si pesa demasiado, subirlo a la carpeta de artefactos y poner el enlace. El enunciado pide el vídeo en el GitHub o un enlace a él.
+https://drive.google.com/drive/folders/19SrdybOELqg3lmdABGIDcE2uSf_Rx5c8
 
 ### 4. Bibliografía y Fuentes Consultadas
 
@@ -368,6 +357,3 @@ Problemas:
 - [SmolVLM2-2.2B-Instruct (HuggingFace)](https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct)
 - [HuggingFace Transformers](https://huggingface.co/docs/transformers)
 - [OpenCV: Structural Analysis and Shape Descriptors](https://docs.opencv.org/4.x/d3/dc0/group__imgproc__shape.html)
-- Enunciados de las prácticas 4 y 4b de la asignatura
-
-> **PENDIENTE:** el preprocesado de `ocr_preprocess` tiene comentarios en inglés que parecen sacados de algún tutorial. Si se adaptó de alguna fuente, añadirla aquí a la bibliografía.
