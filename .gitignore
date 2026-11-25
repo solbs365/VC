@@ -1,1 +1,4 @@
-*/.ipynb_checkpoints/*
+Practica5_VC/fer2013/
+*/.ipynb_checkpoints/
+__pycache__/
+.DS_Store
