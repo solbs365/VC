@@ -1,4 +1,7 @@
 Practica5_VC/fer2013/
+Practica5_VC/emociones_30ep.keras
+Practica5_VC/emociones_mejor.keras
+Practica5_VC/emociones_mejor_fase2.keras
 */.ipynb_checkpoints/
 __pycache__/
 .DS_Store
