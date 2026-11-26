@@ -130,7 +130,19 @@ El retraso de unos segundos entre el inicio de cada tramo del guion y la alerta 
 | :---: | :---: | :---: |
 | <img src="img/p5b_senales_clip.png" width="300"/> | <img src="img/p5b_senales_normalizadas.png" width="300"/> | <img src="img/p5b_alertas.png" width="300"/> |
 
-<img src="img/p5b_ear_ojos.png" width="300"/> <img src="img/p5b_mar_boca.png" width="300"/> <img src="img/p5b_pose_cabeza.png" width="300"/>
+**Las señales sobre fotos de prueba.** Para ver que las señales miden lo que deben, se calcularon sobre fotos hechas con la cámara, con los puntos de MediaPipe dibujados encima.
+
+<img src="img/p5b_ear_ojos.png" width="560"/>
+
+*EAR.* Con los ojos abiertos vale 0,317 y con los cerrados 0,033, porque los puntos de arriba y de abajo de cada párpado (2, 3, 5 y 6) casi se juntan.
+
+<img src="img/p5b_mar_boca.png" width="620"/>
+
+*MAR.* Boca cerrada 0,010, sonrisa 0,103 y bostezo 0,474. La sonrisa queda por debajo del umbral de 0,15, así que sonreír no cuenta como bostezo.
+
+<img src="img/p5b_pose_cabeza.png" width="720"/>
+
+*Pose de la cabeza.* La flecha amarilla marca hacia dónde apunta la nariz. De frente el cabeceo (*pitch*) es de 3° y mirando abajo sube a 18°. En estas fotos el giro (*yaw*) es pequeño, de 11° como máximo.
 
 **En directo** (`codigo/monitor_conductor.py`). El monitor hace lo mismo que el análisis del clip, pero fotograma a fotograma y mirando solo al pasado, que es lo único que existe con la cámara. Se comprobó que, reproduciendo el clip por el monitor, salen exactamente las mismas alertas que en el análisis completo (0 fotogramas distintos en las cinco reglas). La pantalla muestra una banda ATENTO / AVISO / ALERTA, el estado de cada regla y los valores relativos a la cara normal; suena una alarma (que se repite cada 1,5 s en ALERTA) y cada cambio se apunta en `resultados/registro_monitor.csv`. Teclas: `c` calibrar otra vez, `m` sonido sí/no, `ESC` o `q` salir. Con `--grabar` se guarda también el vídeo de la sesión. Si la calibración falla (no se ve la cara, los ojos están cerrados o se mira de lado) el programa lo dice y la repite.
 
@@ -164,10 +176,9 @@ El retraso de unos segundos entre el inicio de cada tramo del guion y la alerta 
 
 ### 4. Demostración
 
-[video](https://github.com/user-attachments/assets/a355ad16-f369-4480-a37d-9cd3f10cd34b)
+https://github.com/user-attachments/assets/a355ad16-f369-4480-a37d-9cd3f10cd34b
 
-*Prototipo A (juego «no te rías») y prototipo B (monitor del conductor), 26 s.*
-
+*Prototipo A (juego «no te rías») y prototipo B (monitor del conductor), 22 s.*
 
 
 ### 5. Estructura del repositorio y ejecución
@@ -181,7 +192,7 @@ Practica5_VC/
 │   ├── monitor_conductor.py  Prototipo B (monitor en directo)
 │   └── robustez.py           Pruebas de robustez del prototipo B
 ├── modelos/                  emociones.keras (CNN entrenada) y face_landmarker.task (MediaPipe)
-├── resultados/               historiales de entrenamiento, métricas, clip de prueba y registros
+├── resultados/               historiales de entrenamiento, métricas, clip de prueba, registros y vídeo de la demostración
 ├── img/                      figuras de este README
 └── contenido/                memes del juego
 ```
