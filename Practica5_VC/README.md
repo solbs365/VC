@@ -20,7 +20,6 @@ Se han desarrollado dos prototipos:
 | A | Entretenimiento: juego social en el que gana quien aguanta más tiempo sin reírse. | Medidor de risa, pantalla de derrota con el meme que ha hecho reír y contador de memes. |
 | B | Seguridad vial: detectar a tiempo la somnolencia y la distracción de quien conduce. | Estado ATENTO / AVISO / ALERTA con el motivo, alarma sonora y registro de eventos. |
 
-La entrega se acompaña de un vídeo de menos de 30 segundos con momentos de los dos prototipos (ver [Demostración](#4-demostración)).
 
 ### 2. Paquetes necesarios
 Se ha trabajado en un environment nuevo, `VC_P5`, con Python 3.11 (TensorFlow 2.21.0 y OpenCV 4.12.0):
@@ -131,9 +130,7 @@ El retraso de unos segundos entre el inicio de cada tramo del guion y la alerta 
 | :---: | :---: | :---: |
 | <img src="img/p5b_senales_clip.png" width="300"/> | <img src="img/p5b_senales_normalizadas.png" width="300"/> | <img src="img/p5b_alertas.png" width="300"/> |
 
-<!-- Si quieres enseñar también las fotos de prueba con los puntos dibujados (aparece la cara):
 <img src="img/p5b_ear_ojos.png" width="300"/> <img src="img/p5b_mar_boca.png" width="300"/> <img src="img/p5b_pose_cabeza.png" width="300"/>
--->
 
 **En directo** (`codigo/monitor_conductor.py`). El monitor hace lo mismo que el análisis del clip, pero fotograma a fotograma y mirando solo al pasado, que es lo único que existe con la cámara. Se comprobó que, reproduciendo el clip por el monitor, salen exactamente las mismas alertas que en el análisis completo (0 fotogramas distintos en las cinco reglas). La pantalla muestra una banda ATENTO / AVISO / ALERTA, el estado de cada regla y los valores relativos a la cara normal; suena una alarma (que se repite cada 1,5 s en ALERTA) y cada cambio se apunta en `resultados/registro_monitor.csv`. Teclas: `c` calibrar otra vez, `m` sonido sí/no, `ESC` o `q` salir. Con `--grabar` se guarda también el vídeo de la sesión. Si la calibración falla (no se ve la cara, los ojos están cerrados o se mira de lado) el programa lo dice y la repite.
 
