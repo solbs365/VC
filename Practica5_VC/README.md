@@ -1,215 +1,215 @@
-## Práctica 5. Biometría: Detección y caracterización de caras
+# Práctica 5: Biometría facial. Documentación
 
-### Contenidos
+Autora 1: [Solmaire Basulto Santana](https://github.com/solbs365)  
+Autor 2: [Gerad Leopoldo Guzmán Hernández](https://github.com/gerad367)
 
-[Aspectos cubiertos](#51-aspectos-cubiertos)
-[Conjunto de datos](#conjunto-de-datos)  
-[Análisis facial](#análisis-facial)  
-[Tarea](#tarea)
+---
 
+### 1. Descripción del Trabajo
+Este repositorio contiene los dos cuadernos Jupyter y el código de los dos prototipos de la quinta práctica de Visión por Computador. El objetivo ha sido extraer información del rostro (expresión, landmarks, orientación de la cabeza) y usarla para provocar una *reacción* en una aplicación que funciona en directo con la webcam.
 
-### Detección de caras
+Se han desarrollado dos prototipos:
 
-Dentro de la biometría, una de las fuentes más importantes, sino la que más, es el rostro del individuo. Por ello, para esta práctica se han preparado varios demostradores de detectores faciales que nos permitan detectarla y posteriormente trabajar con ella. El primero de ellos, [*VC_P5_detectores.ipynb*](VC_P5_detectores.ipynb), integra tres variantes que buscan el rostro mayor de la imagen:
+- **Prototipo A: «Reto no te rías».** Un juego que enseña memes mientras la cámara vigila la cara. Un modelo de emociones **entrenado en esta práctica** con FER2013 estima la probabilidad de risa y, si se te escapa, pierdes.
+- **Prototipo B: Monitor de atención del conductor.** Un sistema que avisa cuando el conductor parece somnoliento o distraído (ojos cerrados, cabeza hacia abajo, mirada a otro lado, bostezo o cara fuera de cámara). No entrena ningún modelo: calcula señales a partir de los landmarks de MediaPipe y las calibra con la cara de cada persona.
 
-- Detector de Viola y Jones [Viola04-ijcv]. La detección de caras se incorpora en OpenCV desde la implementación de Rainer Lienhart [Lienhart02] del conocido, y hoy añejo, detector.
-- Detector basado en Convolutional Neural Networks (CNNs) [Feng21]
-- Detector Multi-task Cascaded Convolutional Networks (MTCNN) [Zhang16]
+**Escenarios de aplicación**
 
-Como primer paso, son necesarias algunas instalaciones de paquetes. Partiendo del *environment* *VC_P1* creado en la primera práctica, para ejecutar los notebooks se ha necesitado instalar los siguientes paquetes:
+| Prototipo | Escenario | Reacción |
+| :--- | :--- | :--- |
+| A | Entretenimiento: juego social en el que gana quien aguanta más tiempo sin reírse. | Medidor de risa, pantalla de derrota con el meme que ha hecho reír y contador de memes. |
+| B | Seguridad vial: detectar a tiempo la somnolencia y la distracción de quien conduce. | Estado ATENTO / AVISO / ALERTA con el motivo, alarma sonora y registro de eventos. |
 
+La entrega se acompaña de un vídeo de menos de 30 segundos con momentos de los dos prototipos (ver [Demostración](#4-demostración)).
 
-<!-- Problemas con ejemplo deepface_kfold tensorflow 2.5.0?-->  
+### 2. Paquetes necesarios
+Se ha trabajado en un environment nuevo, `VC_P5`, con Python 3.11 (TensorFlow 2.21.0 y OpenCV 4.12.0):
+
 ```
-conda create --name VC_P5 python=3.11.5
+conda create --name VC_P5 python=3.11
 conda activate VC_P5
-pip install matplotlib
-pip install mtcnn
-pip install tensorflow   
-pip install deepface
-pip install tf-keras
-pip install opencv-python==4.12.0.88
+pip install tensorflow mediapipe opencv-python numpy matplotlib scikit-learn
 ```
 
-<!-- He eliminado por completo dlib. Daba varios problemas al instalar y nadie terminaba usandolo. En su lugar, he añadido MediaPipe, que es a lo que se iba todo el mundo igualmente -->
-<!-- Por la experiencia previa, el **paquete dlib suele ser el más problemático**, en ocasiones requiere que se instale la versión *Comunidad* de [*Microsoft C++ Build Tools*](https://visualstudio.microsoft.com/downloads/?q=build+tools). En el **caso de no resolverlo en poco tiempo, sugerir no instalar dlib**, y evitar el ejemplo [*VC_P5_detectores.ipynb*](VC_P5_detectores.ipynb), donde se alterna entre distintos detectores de caras y elementos faciales, y usar los demostradores que no incorpora el detector de dlib: [*VC_P5_VJs.ipynb*](VC_P5_VJs.ipynb) (combinación de detectores de Viola y Jones) y [*VC_P5_VJ_DNN_MTCNN.ipynb*](VC_P5_VJ_DNN_MTCNN.ipynb) (varios detectores, sin los disponbibles en dlib).
+Además:
+
+- `modelos/face_landmarker.task` es el modelo de MediaPipe para los 478 landmarks de la cara (ya está en el repositorio).
+- La alarma del monitor usa `afplay`, que solo existe en macOS. En otros sistemas el programa funciona igual pero sin sonido.
+- El dataset FER2013 **no se incluye** (pesa unos 140 MB). Para repetir el entrenamiento hay que descargarlo de [Kaggle](https://www.kaggle.com/datasets/msambare/fer2013) y dejarlo en una carpeta `fer2013/` con las subcarpetas `train/` y `test/` junto a los cuadernos.
+
+### 3. Análisis y Resolución de Tareas
+
+#### Prototipo A: «Reto no te rías»
+
+**Dataset.** Se ha usado FER2013: imágenes de caras en gris de 48×48 píxeles con 7 emociones. El conjunto ya viene separado en entrenamiento y test; del entrenamiento se reserva un 10 % para validación (semilla fija, para que el reparto sea siempre el mismo).
+
+| Clase | angry | disgust | fear | happy | neutral | sad | surprise | Total |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| Entrenamiento | 3995 | 436 | 4097 | 7215 | 4965 | 4830 | 3171 | 28709 |
+| Test | 958 | 111 | 1024 | 1774 | 1233 | 1247 | 831 | 7178 |
+
+El conjunto está muy desbalanceado: *disgust* tiene unas nueve veces menos imágenes que *fear* o *angry*. Para que la red no lo ignore se han usado pesos por clase (los de `balanced` suavizados con raíz cuadrada), de forma que un error en una clase rara cuesta más en la función de pérdida.
+
+**Modelo.** Es una CNN propia, sin ningún modelo preentrenado, con 1.242.919 parámetros:
+
+- 4 bloques de 2 convoluciones 3×3 + `BatchNormalization` + ReLU, seguidos de `MaxPooling` y `Dropout(0.25)`, con 32, 64, 128 y 256 filtros.
+- `GlobalAveragePooling`, una capa densa de 256 neuronas con `BatchNormalization` y `Dropout(0.5)`, y una salida softmax de 7 clases.
+- Aumento de datos solo durante el entrenamiento: giro horizontal, rotación, zoom y traslación pequeños.
+
+**Entrenamiento.** Adam con tasa 1e-3, `ReduceLROnPlateau`, `EarlyStopping` (paciencia 8, recupera los mejores pesos) y `ModelCheckpoint`. Se hizo en dos fases: 30 épocas (43,5 min) y después se continuó el entrenamiento desde la época 30 hasta un máximo de 70 (32,2 min). El `EarlyStopping` lo paró en la época 53, y la mejor fue la **45** (val_loss 1,0275; val_accuracy 0,6195).
+
+| Curvas de entrenamiento | Matriz de confusión (test) |
+| :---: | :---: |
+| <img src="img/p5_curvas_entrenamiento.png" width="480"/> | <img src="img/p5_matriz_confusion.png" width="420"/> |
+
+**Resultados en test** (7178 imágenes que la red no ha visto): **accuracy 0,622** y pérdida 1,019.
+
+| Clase | Precision | Recall | F1 | Imágenes |
+| :--- | :---: | :---: | :---: | :---: |
+| angry | 0.503 | 0.596 | 0.545 | 958 |
+| disgust | 0.500 | 0.541 | 0.519 | 111 |
+| fear | 0.495 | 0.332 | 0.397 | 1024 |
+| happy | 0.883 | 0.814 | 0.847 | 1774 |
+| neutral | 0.524 | 0.692 | 0.596 | 1233 |
+| sad | 0.527 | 0.445 | 0.483 | 1247 |
+| surprise | 0.696 | 0.769 | 0.731 | 831 |
+| Media macro | 0.590 | 0.598 | 0.588 | 7178 |
+
+*Discusión.* Las clases con una expresión muy marcada salen mejor: *happy* (F1 0,847, la mejor, y además la que más imágenes tiene) y *surprise* (0,731). Las peores son *fear* (recall 0,33, se confunde sobre todo con *sad* en un 20 %, con *angry* en un 17 % y con *neutral* en un 14 %) y *sad* (se confunde con *neutral* en un 26 %). *Disgust* se confunde con *angry* en un 25 % de los casos, con solo 111 imágenes de test. Es un resultado razonable para FER2013, un dataset con etiquetas ruidosas y caras muy variadas: en la literatura se estima que una persona acierta alrededor del 65 % de las veces [Goodfellow13]. Para el juego, además, solo importa distinguir bien *happy*, que es la clase en la que el modelo es más fiable.
+
+**Cómo funciona el juego** (`codigo/reto_no_te_rias.py`):
+
+1. MediaPipe detecta la cara y devuelve sus 478 landmarks.
+2. Con los landmarks de los ojos se **alinea** la cara (se gira hasta que los ojos quedan horizontales), se recorta un cuadrado alrededor de ella, se pasa a gris y se reduce a 48×48, el mismo formato con el que se entrenó el modelo.
+3. La CNN devuelve la probabilidad de cada emoción. La de *happy* se **suaviza** con una media móvil exponencial (peso 0,7 al pasado) para que un solo fotograma raro no te haga perder.
+4. Un medidor de risa sube 2,0 por segundo mientras la probabilidad suavizada sea ≥ 0,5 y baja 1,0 por segundo en caso contrario. Si llega a 1, pierdes.
+5. Hay una cuenta atrás de 3 s, cada meme se muestra 6 s, y también se pierde si sales de cámara más de 2 s. Al terminar se enseña cuánto has aguantado y qué meme te ha hecho reír más veces.
+
+Teclas: `ESC` para salir.
+
+*Limitaciones.* El modelo se entrenó con fotos de FER2013 y se usa con una webcam: la iluminación, la resolución y el encuadre son distintos y el acierto real puede ser menor que el 62 % de test. Además, distingue *happy* de una sonrisa o de una risa sin más, no mide la intensidad.
+
+#### Prototipo B: Monitor de atención del conductor
+
+**Señales.** A partir de los landmarks de MediaPipe se calculan cinco señales por fotograma:
+
+| Señal | Cómo se calcula |
+| :--- | :--- |
+| EAR (apertura del ojo) | `(‖p2 − p6‖ + ‖p3 − p5‖) / (2·‖p1 − p4‖)` con los 6 puntos de cada ojo, promediando los dos ojos [Soukupova16] |
+| MAR (apertura de la boca) | `(‖p81 − p178‖ + ‖p13 − p14‖ + ‖p311 − p402‖) / (3·‖p78 − p308‖)` con puntos del labio interior |
+| Giro (yaw), cabeceo (pitch) y ladeo (roll) | `cv2.solvePnP` con 9 landmarks (nariz, barbilla, esquinas de los ojos y de la boca, frente) y un modelo 3D genérico de cara |
+
+**Calibración por persona.** Cada cara es distinta (hay ojos más pequeños, cámaras colocadas más arriba...), así que no se usan valores fijos. Durante los 8 primeros segundos, mirando al frente, se toma la mediana de cada señal como la «cara normal» de esa persona, y todo se mide respecto a ella: `EAR_rel = EAR·cos(yaw) / EAR_normal` (el coseno corrige que el ojo parece más pequeño al girar), `yaw_rel` y `pitch_rel` como diferencia con la postura normal. Cuando el giro supera 40° el EAR y el MAR se descartan, porque con la cara de perfil dejan de ser fiables.
+
+**Reglas.** Cada regla se activa cuando su condición se cumple de forma continua durante un tiempo, lo que evita que un parpadeo o un movimiento rápido disparen una alarma. Un pequeño hueco de datos no reinicia la cuenta.
+
+| Regla | Condición | AVISO | ALERTA | Hueco tolerado |
+| :--- | :--- | :---: | :---: | :---: |
+| ojos | `EAR_rel < 0.5` y no se mira hacia abajo | 0,5 s | 1,0 s | 0 s |
+| abajo | `pitch_rel > 15°` | 1,0 s | 2,0 s | 0,3 s |
+| giro | `\|yaw_rel\| > 20°` | 1,0 s | 2,0 s | 0,3 s |
+| bostezo | `MAR > 0.15` (se da por terminado por debajo de ≈ 0.10) | 1,5 s | no tiene | 0 s |
+| sin cara | no se detecta la cara | 1,0 s | 2,0 s | 0 s |
+
+Con la cabeza hacia abajo el párpado cae y el EAR baja aunque los ojos estén abiertos, por eso en ese caso la regla de los ojos no cuenta. El bostezo solo llega a AVISO, porque un bostezo aislado no es una emergencia.
+
+**Validación con un clip.** Se grabó un clip de 48 s (1363 fotogramas, 28 fps) siguiendo un guion con pitidos: parpadeo normal, ojos cerrados, bostezo, giro a la derecha, giro a la izquierda, mirar abajo y hablar. La cara se detectó en el 100 % de los fotogramas. Las alertas que dio el sistema son estas:
+
+| Acción del guion | Alertas del monitor |
+| :--- | :--- |
+| Parpadeo normal (0 a 8 s) | Ninguna: hay 8 episodios de ojo cerrado, todos de 0,2 s o menos (parpadeos) |
+| Ojos cerrados | AVISO a los 10,9 s y ALERTA a los 11,4 s |
+| Bostezo | AVISO a los 18,3 s |
+| Giro a la derecha | AVISO a los 26,6 s y ALERTA a los 27,6 s |
+| Giro a la izquierda | AVISO a los 32,0 s y ALERTA a los 32,9 s |
+| Mirar abajo | AVISO a los 38,6 s y ALERTA a los 39,6 s |
+| Hablar | AVISO de giro a los 44,6 s (ALERTA de solo 0,1 s): es una **falsa alarma** |
+
+El retraso de unos segundos entre el inicio de cada tramo del guion y la alerta es el tiempo que tarda la persona en reaccionar al pitido y mantener el gesto el tiempo que exige la regla.
+
+| Señales del clip | Señales normalizadas | Alertas |
+| :---: | :---: | :---: |
+| <img src="img/p5b_senales_clip.png" width="300"/> | <img src="img/p5b_senales_normalizadas.png" width="300"/> | <img src="img/p5b_alertas.png" width="300"/> |
+
+<!-- Si quieres enseñar también las fotos de prueba con los puntos dibujados (aparece la cara):
+<img src="img/p5b_ear_ojos.png" width="300"/> <img src="img/p5b_mar_boca.png" width="300"/> <img src="img/p5b_pose_cabeza.png" width="300"/>
+-->
+
+**En directo** (`codigo/monitor_conductor.py`). El monitor hace lo mismo que el análisis del clip, pero fotograma a fotograma y mirando solo al pasado, que es lo único que existe con la cámara. Se comprobó que, reproduciendo el clip por el monitor, salen exactamente las mismas alertas que en el análisis completo (0 fotogramas distintos en las cinco reglas). La pantalla muestra una banda ATENTO / AVISO / ALERTA, el estado de cada regla y los valores relativos a la cara normal; suena una alarma (que se repite cada 1,5 s en ALERTA) y cada cambio se apunta en `resultados/registro_monitor.csv`. Teclas: `c` calibrar otra vez, `m` sonido sí/no, `ESC` o `q` salir. Con `--grabar` se guarda también el vídeo de la sesión. Si la calibración falla (no se ve la cara, los ojos están cerrados o se mira de lado) el programa lo dice y la repite.
+
+**Robustez.** Para comprobar cuánto aguanta el monitor fuera de las condiciones ideales se hizo una sesión guiada de unos 45 s por condición (`codigo/robustez.py`): 8 s de calibración, 7 s sin hacer nada raro (aquí se cuentan las **falsas alarmas**) y un guion con pitidos para cerrar los ojos, girar, mirar abajo y bostezar. La columna `cara_%` es el porcentaje de fotogramas con cara detectada y un guion bajo (`-`) significa que ni siquiera se pudo calibrar.
+
+| Condición | FPS | Cara detectada | Falsas alarmas | Ojos | Giro | Abajo | Bostezo |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| Normal (de frente, buena luz) | 16 | 100 % | 0 | sí | sí | no | sí |
+| Poca luz | 16 | 98 % | — | — | — | — | — |
+| Lejos de la cámara | 29 | 0 % | — | — | — | — | — |
+| Con gafas | 22 | 95 % | 0 | sí | sí | no | no |
+| Cabeza ladeada | 17 | 100 % | 0 | sí | no | sí | no |
+
+*Lo que se ve en la tabla:*
+
+- **No da falsas alarmas** en ninguna de las tres condiciones en las que llega a calibrarse, y la regla de los **ojos** funciona en las tres.
+- **Poca luz y lejos: el monitor no llega ni a calibrarse.** Es el límite del detector de caras, no de las reglas. En poca luz la cara se veía en el 98 % de los fotogramas, pero la orientación de la cabeza no salía bien y la calibración falló. Lejos, el detector no encontró la cara en ningún fotograma. Se comprobó con una simulación sobre el clip: si se reduce la cara a la mitad (≈ 9 % del ancho de la imagen) se sigue detectando, pero al reducirla al 35 % (≈ 6 %) se pierde por completo, y un ruido fuerte en la imagen, como el de una webcam en la oscuridad, también hace que deje de detectarla. Aclarar la imagen o bajar la exigencia del detector no mejoró el resultado.
+- **Mirar abajo y bostezar** solo se detectaron en parte de las sesiones (abajo en 1 de 3, bostezo en 1 de 3). En el clip de validación, con gestos más marcados, sí saltaron. Es probable que en estas pruebas el gesto fuera más suave o corto de lo que exigen las reglas (más de 15° durante 1 s, boca muy abierta 1,5 s), pero no se guardó qué valor se alcanzó, así que no se puede asegurar. Queda como mejora bajar ese umbral y registrar el máximo alcanzado en cada prueba.
+- Con la **cabeza ladeada** el giro no llegó a detectarse.
+- Las **gafas** no impidieron detectar la cara (95 %) ni los ojos cerrados.
+
+*Limitaciones.*
+
+- Los umbrales se ajustaron con un único clip, de una persona y una cámara.
+- Con un giro de más de 40° el EAR y el MAR se descartan.
+- Reírse con la boca muy abierta durante más de 1,5 s podría confundirse con un bostezo.
+- Hablar moviendo la cabeza puede disparar la regla del giro (ocurrió una vez en el clip).
+- El detector de caras es el límite de todo lo demás: si no ve la cara (poca luz, muy lejos) no hay señal que analizar.
+- Los gestos suaves (una mirada rápida hacia abajo, un bostezo corto) pueden no alcanzar las condiciones de las reglas.
 
 
-Si no hay contratiempos, la ejecución de [*VC_P5_detectores.ipynb*](VC_P5_detectores.ipynb) debería ser posible, todas las dependencias están instaladas, pero falta asegurar que todos los clasificadores están presentes en el directorio local. Al ejecutar debería aparecer un error por un archivo no encontrado. En el repositorio [github](https://github.com/otsedom/otsedom.github.io/blob/main/VC/README.md), se incluyen todos los modelos necesarios con excepción de los modelos de máscaras faciales, más pesados, motivo por el cual se produce error al no disponer de los archivos *shape_predictor_5_face_landmarks.dat* y *shape_predictor_68_face_landmarks.dat*. Por su mencionado tamaño no se han incluido en el repositorio. Para poder ejecutar la demo, deben descargarse desde el enlace proporcionado en el campus virtual (opción aconsejada), o desde el [repositorio de archivos de dlib](http://dlib.net/files/).--> 
+### 4. Demostración
 
+<!-- VIDEO: pega aquí, en una línea sola, el enlace https://github.com/user-attachments/assets/... del vídeo demo_p5.mp4 para que se reproduzca dentro del README -->
 
-Como se ha dicho, el notebook [*VC_P5_detectores.ipynb*](VC_P5_detectores.ipynb), integra tres detectores diferentes, el clásico Viola-Jones (también llamado Haar-Cascade), DNN y MTCNN. En primer término la implementación en OpenCV del detector de Viola y Jones [Viola04][Lienhart02] busca caras, en cuyo contenedor intenta localizar los ojos, aplicando la misma arquitectura de detector, pero adaptada al patrón ocular, por medio de los detectores entrenados años atrás en nuestro laboratorio [Castrillon11]. El que llamaremos DNN por su parte, corresponde a una red neuronal muy pequeña, basada en una ResNet10, entrenada para detectar caras. Finalmente, el conocido MTCNN, compuesto de 3 subredes convolucionales: P-Net para obtener posibles rostros, R-Net para rechazar candidatos y O-Net para producir la salida final [Zhang16]. 
+*Prototipo A (juego «no te rías») y prototipo B (monitor del conductor), 26 s.*
 
+Vídeo: [demo_p5.mp4](resultados/demo_p5.mp4)
 
-Pulsando la tecla *d* cambias de detector, y la tecla *e* permite alternar entre la detección con y sin landmarks. Aunque en el ejemplo se muestran pocos landmarks, detectores faciales más recientes, tras detectar el rostro hacen uso de un modelo de sus elementos para encajarlo en la imagen, intentando ajustar para cada cara detectada la máscara de puntos. Esto da como resultado una serie de landmarks como la que se ve en la imagen, siendo esta un ejemplo con 68 landmarks diferentes.
-
-![Careto](images/landmarks.png)  
-*Máscara facial de 68 puntos con numeración*
-
-Dado que las máscaras tienen una numeración que permite el acceso a posiciones concretas, esta información se utiliza para normalizar la imagen (tamaño y orientación) en este ejemplo, pero puede utilizarse para otros fines como muestran las siguientes imágenes.
-
-![Careto](images/facemask2.png)  
-*Máscara sobre el rostro detectado*
-
-
-Un ejemplo final ilustra el uso de [deepface](https://github.com/serengil/deepface) como *wrapper* de distintos detectores. Si bien probablemenmte no optimiza los métodos, permite acceder a distintas propuestas, tanto para detectar, como para analizar rostros (que veremos en la siguiente sección). El cuaderno [*VC_P5_detectores_deepface.ipynb*](VC_P5_detectores_deepface.ipynb), contiene además una celda para detectar con RetinaFace, y otra que permite alternar entre varios. Un detector como RetinaFace, requiere mayores recursos, se recomienda contar con GPU y una instalación de CUDA para su uso.
-
-<!-- Para usuarios linux y Mac, la retroalimentación de éxito que me ha llegado hasta ahora ha siso al instalar CUDA.--> 
-
-
-
-## Mediapipe
-
-[Mediapipe](https://pypi.org/project/mediapipe/) es un framework desarrollado por Google que proporciona acceso a diversas soluciones de aprendizaje automático, sus principales características son que es un proyecto *open source*, y que está concebido para entorno móvil, web y de limitados recursos.
-Te será de utilidad la [documentación](https://ai.google.dev/edge/mediapipe/solutions/guide). En cualquier caso, para su instalación basta con la siguiente línea:
+### 5. Estructura del repositorio y ejecución
 
 ```
-pip install mediapipe
+Practica5_VC/
+├── VC_P5_Tarea1.ipynb        Prototipo A: dataset, entrenamiento y evaluación de la CNN de emociones
+├── VC_P5_Tarea2.ipynb        Prototipo B: señales, calibración, reglas, validación y robustez
+├── codigo/
+│   ├── reto_no_te_rias.py    Prototipo A (juego en directo)
+│   ├── monitor_conductor.py  Prototipo B (monitor en directo)
+│   └── robustez.py           Pruebas de robustez del prototipo B
+├── modelos/                  emociones.keras (CNN entrenada) y face_landmarker.task (MediaPipe)
+├── resultados/               historiales de entrenamiento, métricas, clip de prueba y registros
+├── img/                      figuras de este README
+└── contenido/                memes del juego
 ```
 
-En la página de [Mediapipe](https://developers.google.com/mediapipe) se pueden encontrar soluciones para diferentes tasks, como pueden ser transcriptores de audio, embedders de texto o distintas aplicaciones de visión, en las que nos vamos a centrar. Cada task, cuenta con una demo que se puede usar desde el navegador y con las instrucciones para usarla en distintas plataformas. 
-
-Para el cuaderno, [*VC_P5_mediapipe.ipynb*](VC_P5_VC_P5_mediapipe.ipynb),  se han adaptado tres de ellas: 1) [Face Landmark Detection](https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker), 2) [Hand Landmark Detection](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker) y 3) [Pose Landmarker model](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker). Importante recalcar que en todos los casos **se deberá descargar el modelo correspondiente desde la web**:
-
-
-
-## Análisis facial
-
-En esta sección se muestran varias opciones para la clasificación supervisada del rostro detectado. Como ejemplo ilustrativo, se hace uso de un conjunto de datos para la la clasificación del sexo aparente del individuo, en concreto **DatabaseGender59x65**, que puede **descargarse desde el campus virtual**. Tras descomprimir, observarás que contiene dos carpetas,  se asume un problema de dos clases: femenino y masculino.
-
-
-### Autocaras
-
-La primera de las demos está contenida en el archivo [*VC_P5_eigenfaces.ipynb*](VC_P5_eigenfaces.ipynb). Antes de lanzarla, debes modificar la ruta del conjunto de datos, para ajustarla a tu máquina. Al lanzarlo, a modo de resumen realiza las siguientes acciones:
-
-- Antes de nada, modifica la ruta especificada en el código en la variable *folder* para adaptarla a tu equipo
-- Carga el conjunto de datos sin aplicar ningún tipo de recorte, cada imagen se recompone como vector, obteniendo la matriz *X* con todas las muestras, y la matriz *Y* con sus etiquetas numéricas
-- Visualiza la primera muestra de cada clase y estadísticas del conjunto de datos
-- De forma aleatoria se divide en conjunto de datos en entrenamiento y test usando *train_test_split*, es un *hold-out* 70/30.
-- A continuación se realizan varios experimentos de clasificación:
-  - Utiliza el valor de los píxeles como vector de características, clasificando por mayoría entre los k vecinos más cercanos (k=5 en el código)
-  - Realiza el análisis de componentes principales del conjunto de entrenamiento, tomando las 150 primeras como vector de características, probando dos esquemas de clasificación:
-    - por mayoría entre los k vecinos más cercanos (KNN) (k=5 en el código)
-    - utilizando una máquina de vectores soporte (SVM)
-  - Realiza el análisis de componentes principales del conjunto de entrenamiento, tomando las componentes que cubran el 95% de la varianza del conjunto. De nuevo prueba dos esquemas de clasificación:
-    - por mayoría KNN (k=5 en el código)
-    - utilizando una SVM
-
-
-![PCA](images/pca.png)  
-*Caras principales*
-
-Antes de la ejecución, es probable que requieras añadir los paquetes de scikit-learn y scikit-image al *environment*. Estas dos librerías, especialmente la primera, son ampliamente usadas en el mundo del aprendizaje automático, contienen varios modelos clásicos para usarlos de forma muy sencilla y cuentan con una muy buena [documentación](https://scikit-learn.org/stable/). 
+Desde la carpeta `Practica5_VC` y con el environment activado:
 
 ```
-pip install scikit-learn
-pip install scikit-image
+conda activate VC_P5
+python codigo/reto_no_te_rias.py                  # prototipo A (ESC para salir)
+python codigo/monitor_conductor.py                # prototipo B (ESC o q para salir)
+python codigo/monitor_conductor.py --grabar resultados/demo_monitor.mp4
+python codigo/robustez.py "poca luz"              # una prueba de robustez
 ```
 
-Tras la ejecución, para todas las variantes se muestran métricas y matriz de confusión. ¿Qué esquema consideras que es mejor?
+Ambos programas abren la webcam; la primera vez macOS pide permiso de cámara. El cuaderno de la tarea 1 **no vuelve a entrenar** si ya existe `modelos/emociones.keras` (el entrenamiento tarda más de una hora): para repetirlo hay que renombrar ese archivo y tener el dataset descargado. El cuaderno de la tarea 2 reutiliza las fotos de `fotos_prueba/` y el clip de `resultados/` si existen y, si no, los vuelve a grabar con la cámara. Esa carpeta de fotos no se sube al repositorio.
 
-¿Qué ocurriría si se realiza el mismo proceso sobre una zona recortada de la imagen, por ejemplo te centras en la zona ocular. Comentar que las imágenes tienen un tamaño 59x65, habiendo sido normalizadas para que los ojos anotados/detectados estén en las posiciones (16,17) y (42,17).
-
-
-### Descriptores locales
-
-El segundo demostrador [*VC_P5_eigenfaces_handcrafted_kfold.ipynb*](VC_P5_eigenfaces_handcrafted_kfold.ipynb) diseña un experimento kfold, comparando el uso de autocaras con un par de configuraciones basadas en LBP y HOG.
-A modo de resumen realiza las siguientes acciones:
-
-- De nuevo, recuerda en primer lugar modificar la ruta especificada en el código en la variable *folder* para adaptarla a tu equipo
-- Carga el conjunto de datos sin aplicar ningún tipo de recorte, cada imagen se recompone como vector, obteniendo la matriz *X* con todas las muestras, y la matriz *Y* con sus etiquetas numéricas
-- Se visualizan varias muestras de cada clase y estadísticas del conjunto de datos
-- De forma aleatoria se divide en conjunto de datos en varios subconjuntos usando *StratifiedKFold* para diseñar el kfold
-- Realiza el análisis de componentes principales (PCA) del conjunto de entrenamiento, tomando las componentes que cubran el 95% de la varianza del conjunto
-- Posteriormente aplica los siguientes esquemas de clasificación:
-  - Clasifica con píxeles como características y KNN
-  - Clasifica con componentes PCA como características con KNN
-  - Clasifica con componentes PCA como características con SVM
-  - Clasifica con LBP como características con SVM
-  - Clasifica con HOG como características con SVM
-  - Clasificador aplicado (*stacked*) combinando los respectivos clasificadores SVM
-
-Además de la zona de interés del rostro, como en el ejemplo de la sección previa, la división en celdas para el cálculo de los histogramas HOG y LBP es configurable. Es por ello posible mejorar tasas de rendimiento, en particular si mejoramos los datos proporcionados al clasificador apilado.
-
-¿Te aventuras a probar otras combinaciones de región de interés y descriptores locales?
+Los memes de `contenido/` proceden de internet y se usan solo con fines académicos; su autoría es de sus creadores.
 
 
-### deepface
+### 6. Bibliografía y Fuentes Consultadas
 
-La demo contenida en [*VC_P5_deepface_kfold.ipynb*](VC_P5_deepface_kfold.ipynb) es similar a la del apartado previo, plantea un experimento kfold, tomando en este caso como características los *embeddings* proporcionados por uno de los modelos presentes en deepface. En concreto he tomado FaceNet, si bien el código está preparado para escoger otro modelo antes de realizar la carga de datos. Al cargar los datos se obtiene el correspondiente *embedding* que se almacena en *X*, siendo por ello el proceso de carga más lento. En la primera ejecución se descargará el modelo si fuera necesario, siendo almacenado en la carpeta *.deepface*. Tenlo presente si vas justo de disco.
-
-Posteriormente se lanza el experimento kfold. ¿Qué te parecen los resultados?
-¿Qué ocurre con otros modelos?
-
-<!-- Sin embargo, quiero mostrar una demo, [*Demo_BuscaParecidos.py*](Demo_BuscaParecidos.py), que busca parecidos en un conjunto de caras a partir de distancias obtenidas con *embeddings* de FaceNet. Advierto que es una demo compuesta en ratos libres durante sesiones de actividades de divulgación bajo alguna carpa en una plaza, por lo que pueden existir errores.
-Un proceso similar es el que está detrás de [Art selfie](https://artsandculture.google.com/camera/selfie).-->
-
-Deepface además de detectar caras, dispone de utilidades para reconocimiento, descripción y estimación de la expresión facial, que puedes ver en su web.
-mencionar utilizades para verificación y reconocimiento de identidad. En ambos casos se le proporciona dos parámetros:
-
-- Para verificar, se proporcionan dos imágenes
-- Para reconocer una imagen y la ruta  a la carpeta con la base de datos de identidades registradas.
-
-En el último ejemplo, se ilustra brevemente la utilidad de descripción facial a través de la función *analyze* que permite estimar:
-
-- identidad
-- sexo
-- raza
-- emoción
-
-En los dos últimos casos proporciona probabilidades de cada clase considerada, además de la ganadora. Un pequeño ejemplo es el incluido en [*VC_P5_deepface_analyze.ipynb*](VC_P5_deepface_analyze.ipynb). Tener presente, que cada modalidad requiere la descarga de modelos en su primera ejecución. 
-
-
-## Tarea
-
-Tras mostrar opciones para la detección y extracción de información de caras humanas con deepface, la tarea consiste en proponer dos escenarios de aplicación y desarrollar dos prototipos de temática libre que provoquen *reacciones* a partir de la información extraída del rostro. Uno de los prototipos deberá incluir el uso de algún modelo entrenado por ustedes para la extracción de información biométrica, similar al ejemplo del género planteado durante la práctica pero con diferente aplicación (emociones, raza, edad...). El otro es de temática completamente libre. Se valorará el correcto uso de los detectores y los landmarks, la robustez del prototipo, el proceso de entrenamiento del modelo biométrico (incluyendo la selección y adecuación del dataset y la discusión de los resultados) y la complejidad del modelo entrenado.
-
-Los detectores proporcionan información del rostro, y de sus elementos faciales. Ideas inmediatas pueden ser filtros, aunque no hay limitaciones en este sentido. La entrega debe venir acompañada de un gif animado o vídeo de un máximo de 30 segundos con momentos seleccionados de las propuestas. Las propuestas se utilizarán para una posterior votación y elección de las mejores entre el grupo. Se dejan algunos ejemplos más adelante:
-
-Como extras se proponen:
-
-- El entrenamiento de modelos clásicos y redes neuronales para realizar una comparativa entre ellos, no solo a nivel de resultados, sino de facilidad de uso y rapidez de inferencia, etc.
-
-- Comparar el rendimiento de los modelos entrenados con la función analyze de deepface.
-
-![AJ](images/AlejandroJoaquin2324.gif)  
-*Alejandro y Joaquín*
-
-![DI](images/AsmaeJavier2526.gif)  
-*Asmae y Javier*
-
-![DJ](images/DanielJorge2324.gif)  
-*Daniel y Jorge*
-
-
-
-Recomendar también propuestas como:
-
-<!--Además de la demo mostrada de parecidos,
-recomendar la lectura de [Working with Faces](https://kcimc.medium.com/working-with-faces-e63a86391a93) por [Kyle McDonald](https://kylemcdonald.net), y ver propuestas como:-->
-
-- [Sharing Faces](https://vimeo.com/96549043) de [Kyle McDonald](https://kylemcdonald.net)
-- [Más Que la Cara](https://zachlieberman.medium.com/más-que-la-cara-overview-48331a0202c0) de Zach Lieberman
-- [Art selfie](https://artsandculture.google.com/camera/selfie)
-
-
-
-
-<!--
-
-La instalación debida a Zach Lieberman titulada [Más Que la Cara](https://zachlieberman.medium.com/más-que-la-cara-overview-48331a0202c0) puede dar otra fuente de inspiración. La utilidad [FaceOSC de Kyle McDonald](https://vimeo.com/26098366) también sugiere usos.
-
-Tampoco hay limitación sobre el detector concreto a utilizar, acepto la utilización de otras herramientas. En este sentido puede interesarles echar un vistazo a [Mediapipe](https://google.github.io/mediapipe/).-->
-
-
-## Referencias
-
-- [Castrillo11] Modesto Castrillón, Oscar Déniz, Daniel Hernández, and Javier Lorenzo. A comparison of face  and facial feature detectors based on the violajones general object detection framework. Machine Vision and Applications,2011.  
-- [Feng21] Yuantao Feng and Shiqi Yu and Hanyang Peng and Yan-ran Li and Jianguo Zhang. Detect Faces Efficiently: A Survey and Evaluations. IEEE Transactions on Biometrics, Behavior, and Identity Science, 2021
-- [Lienhart02] Rainer Lienhart and Jochen Maydt. An extended set of Haar-like features for rapid object detection. ICIP 2002  
-- [Viola04] Paul Viola and Michael J. Jones. Robust real-time face detection. International Journal of Computer Vision, 2004  
-- [Zhang16] Zhang, K., Zhang, Z., Li, Z., and Qiao, Y. Joint face detection and alignment using multitask cascaded convolutional networks. IEEE Signal Processing Letters, 2016
-
-
-***
-Bajo licencia de Creative Commons Reconocimiento - No Comercial 4.0 Internacional
+- [Goodfellow13] I. Goodfellow et al. [Challenges in Representation Learning: A report on three machine learning contests](https://arxiv.org/abs/1307.0414). Neural Networks, 2013. (Origen del dataset FER2013)
+- [FER2013 en Kaggle](https://www.kaggle.com/datasets/msambare/fer2013)
+- [Soukupova16] T. Soukupová y J. Čech. [Real-Time Eye Blink Detection using Facial Landmarks](https://vision.fe.uni-lj.si/cvww2016/proceedings/papers/05.pdf). CVWW, 2016. (Definición del EAR)
+- [MediaPipe Face Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker)
+- [OpenCV: Perspective-n-Point (solvePnP)](https://docs.opencv.org/4.x/d5/d1f/calib3d_solvePnP.html)
+- [Keras: API reference](https://keras.io/api/)
+- [scikit-learn: Metrics and scoring](https://scikit-learn.org/stable/modules/model_evaluation.html)

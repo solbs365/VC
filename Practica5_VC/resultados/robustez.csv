@@ -1,0 +1,6 @@
+condicion,fps,cara_%,falsas_alarmas,ojos,giro,abajo,bostezo
+normal,16,100,0,si,si,no,si
+poca luz,16,98,-,-,-,-,-
+lejos,29,0,-,-,-,-,-
+gafas,22,95,0,si,si,no,no
+ladeada,17,100,0,si,no,si,no
