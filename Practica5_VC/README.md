@@ -167,11 +167,11 @@ El retraso de unos segundos entre el inicio de cada tramo del guion y la alerta 
 
 ### 4. Demostración
 
-<!-- VIDEO: pega aquí, en una línea sola, el enlace https://github.com/user-attachments/assets/... del vídeo demo_p5.mp4 para que se reproduzca dentro del README -->
+[video](https://github.com/user-attachments/assets/a355ad16-f369-4480-a37d-9cd3f10cd34b)
 
 *Prototipo A (juego «no te rías») y prototipo B (monitor del conductor), 26 s.*
 
-Vídeo: [demo_p5.mp4](resultados/demo_p5.mp4)
+
 
 ### 5. Estructura del repositorio y ejecución
 
